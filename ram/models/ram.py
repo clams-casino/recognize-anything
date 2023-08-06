@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from .bert import BertConfig, BertLMHeadModel, BertModel
+from .bert import BertConfig, BertModel
 from .swin_transformer import SwinTransformer
 from .utils import *
 
@@ -108,10 +108,6 @@ class RAM(nn.Module):
         encoder_config.encoder_width = 512
         self.tag_encoder = BertModel(config=encoder_config,
                                      add_pooling_layer=False)
-
-        # create image-tag-text decoder
-        decoder_config = BertConfig.from_json_file(med_config)
-        self.text_decoder = BertLMHeadModel(config=decoder_config)
 
         self.delete_tag_index = delete_tag_index
         self.prompt = prompt
