@@ -15,7 +15,7 @@ from ram import get_transform
 
 
 parser = argparse.ArgumentParser(
-    description='Tag2Text inferece for tagging and captioning')
+    description='RAM inference for tagging')
 parser.add_argument('--image',
                     metavar='DIR',
                     help='path to dataset',
@@ -23,12 +23,12 @@ parser.add_argument('--image',
 parser.add_argument('--pretrained',
                     metavar='DIR',
                     help='path to pretrained model',
-                    default='pretrained/tag2text_swin_14m.pth')
+                    default='pretrained/ram_swin_large_14m.pth')
 parser.add_argument('--image-size',
                     default=384,
                     type=int,
                     metavar='N',
-                    help='input image size (default: 448)')
+                    help='input image size (default: 384)')
 
 
 if __name__ == "__main__":
