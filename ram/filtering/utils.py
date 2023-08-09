@@ -42,11 +42,6 @@ def compute_unlikely_tags_center_crop_ensemble(
 
     cc_images = [center_crop(image, ccp) for ccp in cc_proportions]
 
-    # fig, axes = plt.subplots(1, len(cc_images) + 1, figsize=(12, 6))
-    # axes[0].imshow(image)
-    # for i in range(1, len(cc_images) + 1):
-    #     axes[i].imshow(cc_images[i - 1])
-
     transform = get_transform(image_size=model.image_size)
 
     unlikely_tags_set = set()
@@ -55,8 +50,6 @@ def compute_unlikely_tags_center_crop_ensemble(
         res = inference_ram(cc_image_input, model)
         cc_image_tags = res[0].split(" | ")
 
-        # print("cc image tags:\n", cc_image_tags, "\n")
-
         unlikely_tags = [tag for tag in image_tags if tag not in cc_image_tags]
         unlikely_tags_set.update(unlikely_tags)
 
@@ -64,14 +57,14 @@ def compute_unlikely_tags_center_crop_ensemble(
 
 
 def compute_unlikely_tags_contrast_ensemble(
-    image: PIL.Image,  
+    image: PIL.Image,
     image_tags: Iterable[str],
     contrast_factors: Iterable[float],
     model: RAM,
     device,
 ) -> Iterable[str]:
-    '''
-    Finds unlikely tags in a set of tags for an image by running the 
+    """
+    Finds unlikely tags in a set of tags for an image by running the
     model on contrast adjusted version of the original image
 
     Args:
@@ -83,7 +76,7 @@ def compute_unlikely_tags_contrast_ensemble(
 
     Returns:
         set of unlikely tags
-    '''
+    """
 
     def modify_contrast(img, contrast_factor):
         enhancer = PIL.ImageEnhance.Contrast(img)
@@ -91,23 +84,15 @@ def compute_unlikely_tags_contrast_ensemble(
 
     mc_images = [modify_contrast(image, cf) for cf in contrast_factors]
 
-    
-    # fig, axes = plt.subplots(1,len(mc_images)+1, figsize=(12,6))
-    # axes[0].imshow(image)
-    # for i in range(1,len(mc_images)+1):
-    #     axes[i].imshow(mc_images[i-1])
-
     transform = get_transform(image_size=model.image_size)
-    
+
     unlikely_tags_set = set()
     for mc_image in mc_images:
         mc_image_input = transform(mc_image).unsqueeze(0).to(device)
         res = inference_ram(mc_image_input, model)
-        mc_image_tags = res[0].split(' | ')
-        
-        # print('mc image tags:\n', mc_image_tags, '\n')
-    
+        mc_image_tags = res[0].split(" | ")
+
         unlikely_tags = [tag for tag in image_tags if tag not in mc_image_tags]
         unlikely_tags_set.update(unlikely_tags)
-    
+
     return unlikely_tags_set
