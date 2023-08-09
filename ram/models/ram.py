@@ -43,6 +43,7 @@ class RAM(nn.Module):
         super().__init__()
 
         # create image encoder
+        self.image_size = image_size
         if vit == 'swin_b':
             if image_size == 224:
                 vision_config_path = f'{CONFIG_PATH}/configs/swin/config_swinB_224.json'
