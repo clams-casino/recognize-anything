@@ -7,7 +7,7 @@ from ram import get_transform
 
 
 def compute_unlikely_tags_center_crop_ensemble(
-    image: PIL.Image,
+    image: PIL.Image.Image,
     image_tags: Iterable[str],
     cc_proportions: Iterable[float],
     model: RAM,
@@ -57,7 +57,7 @@ def compute_unlikely_tags_center_crop_ensemble(
 
 
 def compute_unlikely_tags_contrast_ensemble(
-    image: PIL.Image,
+    image: PIL.Image.Image,
     image_tags: Iterable[str],
     contrast_factors: Iterable[float],
     model: RAM,
@@ -96,3 +96,40 @@ def compute_unlikely_tags_contrast_ensemble(
         unlikely_tags_set.update(unlikely_tags)
 
     return unlikely_tags_set
+
+
+def compute_tags_ensemble(
+        images: Iterable[PIL.Image.Image],
+        model: RAM,
+        device,
+        min_vote_portion: float = 0.68,
+) -> Iterable[str]:
+    """
+    Finds tags that are present in at least min_vote_portion of the images in the ensemble
+
+    Args:
+        images: images to ensemble
+        model: tagging model
+        device: device holding the tagging model
+        min_vote_portion: minimum portion of images in the ensemble that must contain a tag
+
+    Returns:
+        set of tags
+    """
+    transform = get_transform(image_size=model.image_size)
+
+    tags_cnt = {}
+    for image in images:
+        image_input = transform(image).unsqueeze(0).to(device)
+        res = inference_ram(image_input, model)
+        image_tags = res[0].split(" | ")
+
+        for tag in image_tags:
+            if tag not in tags_cnt:
+                tags_cnt[tag] = 0
+            tags_cnt[tag] += 1
+
+    tags = [tag for tag, cnt in tags_cnt.items() if cnt >= len(images) * min_vote_portion]
+
+    return tags
+
