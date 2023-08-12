@@ -51,4 +51,4 @@ if __name__ == "__main__":
 
     res = inference(image, model)
     print("Image Tags: ", res[0])
-    print("图像标签: ", res[1])
+    print("Confidence: ", " | ".join(["{:.3f}".format(conf) for conf in res[1]]))

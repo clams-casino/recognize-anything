@@ -27,8 +27,7 @@ class RAM(nn.Module):
                  prompt='a picture of ',
                  threshold=0.68,
                  delete_tag_index=[],
-                 tag_list=f'{CONFIG_PATH}/data/ram_tag_list.txt',
-                 tag_list_chinese=f'{CONFIG_PATH}/data/ram_tag_list_chinese.txt'):
+                 tag_list=f'{CONFIG_PATH}/data/ram_tag_list.txt'):
         r""" The Recognize Anything Model (RAM) inference module.
         RAM is a strong image tagging model, which can recognize any common category with high accuracy.
         Described in the paper " Recognize Anything: A Strong Image Tagging Model" https://recognize-anything.github.io/
@@ -116,7 +115,7 @@ class RAM(nn.Module):
 
         # load tag list
         self.tag_list = self.load_tag_list(tag_list)
-        self.tag_list_chinese = self.load_tag_list(tag_list_chinese)
+
 
         # create image-tag recognition decoder
         self.threshold = threshold
@@ -190,26 +189,26 @@ class RAM(nn.Module):
             mode='tagging',
         )
 
-        logits = self.fc(tagging_embed[0]).squeeze(-1)
+        class_scores = torch.sigmoid(
+            self.fc(tagging_embed[0]).squeeze(-1))
 
         targets = torch.where(
-            torch.sigmoid(logits) > self.class_threshold.to(image.device),
+            class_scores > self.class_threshold.to(image.device),
             torch.tensor(1.0).to(image.device),
             torch.zeros(self.num_class).to(image.device))
 
         tag = targets.cpu().numpy()
         tag[:,self.delete_tag_index] = 0
         tag_output = []
-        tag_output_chinese = []
+        tag_confidences = []
         for b in range(bs):
             index = np.argwhere(tag[b] == 1)
+            confidences = class_scores[b, index].cpu().numpy().reshape(-1)
+            tag_confidences.append(confidences)
             token = self.tag_list[index].squeeze(axis=1)
             tag_output.append(' | '.join(token))
-            token_chinese = self.tag_list_chinese[index].squeeze(axis=1)
-            tag_output_chinese.append(' | '.join(token_chinese))
 
-
-        return tag_output, tag_output_chinese
+        return tag_output, tag_confidences
 
     def generate_tag_openset(self,
                  image,
@@ -237,10 +236,10 @@ class RAM(nn.Module):
             mode='tagging',
         )
 
-        logits = self.fc(tagging_embed[0]).squeeze(-1)
+        class_scores = torch.sigmoid(self.fc(tagging_embed[0]).squeeze(-1))
 
         targets = torch.where(
-            torch.sigmoid(logits) > self.class_threshold.to(image.device),
+            class_scores > self.class_threshold.to(image.device),
             torch.tensor(1.0).to(image.device),
             torch.zeros(self.num_class).to(image.device))
 
